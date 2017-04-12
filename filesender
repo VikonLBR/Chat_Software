@@ -1,0 +1,68 @@
+package filemanager;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
+import ipaddress.Sop;
+
+public class Sender {
+
+	public static void main(String[] args) throws UnknownHostException, IOException {
+		Socket s=new Socket("192.168.0.104",2333);
+		Sop.print("Linked........");
+		InputStream is=s.getInputStream();
+		OutputStream os=s.getOutputStream();
+		BufferedInputStream bis=new BufferedInputStream(is);
+		BufferedOutputStream bos=new BufferedOutputStream(os);
+		
+		BufferedReader br1=new BufferedReader(new InputStreamReader(System.in));
+		Sop.print("输入路径文件名");
+		String path=br1.readLine().trim();
+		File fread=new File(path);
+		Sop.print(fread.getName());
+		if(!fread.exists())
+			fread.createNewFile();
+		br1.close();
+		BufferedInputStream bisfile=new BufferedInputStream(new FileInputStream(fread));
+		
+		byte[] bread=new byte[1024*10];
+		byte[] fd=new byte[1024];
+		int length;
+		String srhead;
+		srhead="filenameis"+fread.getName();
+		Sop.print(srhead);
+		bos.write(srhead.trim().getBytes());
+		bos.flush();
+		
+		length=is.read(fd);	
+		String feedback=new String(fd,0,length);
+		if(feedback.trim().equals("namereceived"))
+			Sop.print("file transportation start");
+		
+		while((length=bisfile.read(bread))!=-1){
+			
+
+			
+			bos.write(bread,0,length);
+			bos.flush();
+				
+			length=bis.read(fd);
+			feedback=new String(fd,0,length);			
+			while(!feedback.trim().equals("re")){}//wait for feedback from server
+		}
+		Sop.print("tansportation ends");
+		s.close();
+		bisfile.close();
+	}
+
+}
